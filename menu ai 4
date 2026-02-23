@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MenuAI</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0e0f11;--surface:#16181c;--s2:#1e2127;--border:#2a2d35;--accent:#f5a623;--text:#f0f0f0;--muted:#6b7280;--green:#4ade80;--red:#f87171;--blue:#60a5fa;--orange:#fb923c;--purple:#c084fc}
+body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+nav{display:flex;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--border);background:rgba(14,15,17,0.98);flex-shrink:0;z-index:100;gap:8px}
+.logo{font-family:'DM Serif Display',serif;font-size:20px;color:var(--accent);white-space:nowrap}
+.logo span{color:var(--text)}
+.nav-tabs{display:flex;gap:2px;overflow-x:auto}
+.nav-tab{padding:6px 12px;border-radius:7px;border:none;background:none;color:var(--muted);font-family:'Sora',sans-serif;font-size:12px;cursor:pointer;white-space:nowrap}
+.nav-tab:hover{color:var(--text);background:var(--surface)}
+.nav-tab.active{background:var(--s2);color:var(--text);font-weight:600}
+.nav-right{display:flex;gap:6px;align-items:center;flex-shrink:0}
+.lang-sel{background:var(--s2);border:1px solid var(--border);border-radius:7px;padding:5px 8px;color:var(--text);font-family:'Sora',sans-serif;font-size:11px;cursor:pointer;outline:none}
+.ai-btn{padding:6px 12px;border-radius:7px;border:1px solid rgba(245,166,35,0.4);background:rgba(245,166,35,0.1);color:var(--accent);font-family:'Sora',sans-serif;font-size:12px;font-weight:600;cursor:pointer}
+.app-body{display:flex;flex:1;overflow:hidden}
+.main-panel{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.ai-panel{width:290px;min-width:290px;border-left:1px solid var(--border);display:flex;flex-direction:column;background:var(--surface);transition:width .2s,min-width .2s}
+.ai-panel.hidden{width:0;min-width:0;overflow:hidden;border:none}
+.ai-head{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px;flex-shrink:0}
+.ai-dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
+.ai-msgs{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px}
+.msg{display:flex;flex-direction:column;gap:2px}
+.msg-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px}
+.msg-lbl.ai{color:var(--blue)}.msg-lbl.chef{color:var(--accent)}
+.msg-bubble{padding:8px 10px;border-radius:10px;font-size:12px;line-height:1.45;white-space:pre-line}
+.msg.ai .msg-bubble{background:rgba(96,165,250,.1);border:1px solid rgba(96,165,250,.2)}
+.msg.chef .msg-bubble{background:var(--s2)}
+.typing{display:none;align-items:center;gap:6px;padding:6px 10px;font-size:11px;color:var(--muted);flex-shrink:0}
+.typing.show{display:flex}
+.tdots{display:flex;gap:3px}
+.tdot{width:5px;height:5px;border-radius:50%;background:var(--blue)}
+.ai-footer{padding:10px;border-top:1px solid var(--border);flex-shrink:0}
+.qbtns{display:flex;flex-direction:column;gap:3px;margin-bottom:7px}
+.qbtn{padding:5px 8px;border-radius:6px;background:var(--s2);border:1px solid var(--border);color:var(--muted);font-size:11px;cursor:pointer;text-align:left;font-family:'Sora',sans-serif}
+.qbtn:hover{border-color:var(--accent);color:var(--accent)}
+.ai-row{display:flex;gap:5px}
+.ai-row input{flex:1;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);font-family:'Sora',sans-serif;font-size:12px;outline:none}
+.ai-row input:focus{border-color:var(--accent)}
+.ai-send{width:32px;height:32px;border-radius:7px;background:var(--accent);border:none;cursor:pointer;font-size:15px;color:#000;font-weight:bold;flex-shrink:0}
+.view{display:none;flex:1;overflow:hidden;flex-direction:column}
+.view.active{display:flex}
+.ctrl-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;flex-shrink:0}
+.ctrl-grp{display:flex;flex-direction:column;gap:3px}
+.ctrl-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--muted)}
+select{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text);font-family:'Sora',sans-serif;font-size:12px;cursor:pointer;outline:none}
+.btn{padding:7px 13px;border-radius:8px;border:none;font-family:'Sora',sans-serif;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.btn-acc{background:var(--accent);color:#000}
+.btn-sec{background:var(--s2);color:var(--text);border:1px solid var(--border)}
+.btn-grn{background:rgba(74,222,128,.12);color:var(--green);border:1px solid rgba(74,222,128,.3)}
+.rules-bar{padding:6px 16px;border-bottom:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0}
+.rbadge{display:flex;align-items:center;gap:4px;background:var(--s2);border:1px solid var(--border);padding:3px 7px;border-radius:5px;font-size:10px;color:var(--muted)}
+.rdot{width:7px;height:7px;border-radius:50%}
+.legend-bar{padding:5px 16px;border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap;flex-shrink:0}
+.leg{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)}
+.ldot{width:8px;height:8px;border-radius:2px}
+.loader-bar{display:none;align-items:center;gap:8px;padding:10px 16px;background:rgba(245,166,35,.05);border-bottom:1px solid var(--border);flex-shrink:0}
+.loader-bar.show{display:flex}
+.tbl-wrap{flex:1;overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:720px}
+thead th{background:var(--s2);padding:9px 6px;font-size:10px;font-weight:600;text-align:center;letter-spacing:.5px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+th.cat-h{text-align:left;padding-left:12px;color:var(--muted);min-width:105px}
+th.day-h{color:var(--accent);min-width:135px}
+.cat-td{padding:7px 12px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);background:var(--surface);border-bottom:1px solid var(--border);white-space:nowrap}
+.dish-td{padding:4px;background:var(--bg);border-bottom:1px solid var(--border);border-left:1px solid var(--border);vertical-align:top;cursor:pointer;position:relative;min-height:44px}
+.dish-td:hover{background:var(--surface)}
+.dish-td:hover .eh{opacity:1}
+.eh{position:absolute;top:3px;right:3px;font-size:10px;opacity:0;color:var(--muted);pointer-events:none}
+.dish-inner{display:flex;flex-direction:column;gap:2px;padding:2px}
+.sr .db{border-left:3px solid var(--red);background:rgba(248,113,113,.07)}
+.sg .db{border-left:3px solid var(--green);background:rgba(74,222,128,.07)}
+.sc .db{border-left:3px solid #fbbf24;background:rgba(251,191,36,.07)}
+.mf .db{border-left:3px solid var(--orange);background:rgba(251,146,60,.07)}
+.ms .db{border-left:3px solid var(--blue);background:rgba(96,165,250,.07)}
+.mm .db{border-left:3px solid var(--purple);background:rgba(192,132,252,.07)}
+.db{border-radius:6px;padding:5px 7px;font-size:11px;line-height:1.35;border-left:3px solid transparent;background:var(--s2);word-break:break-word}
+.dn{font-weight:500;display:block}
+.dtgs{display:flex;gap:2px;margin-top:2px;flex-wrap:wrap}
+.dtg{font-size:9px;padding:1px 4px;border-radius:3px;font-weight:600}
+.dtg-v{background:rgba(74,222,128,.12);color:var(--green)}
+.dtg-f{background:rgba(251,146,60,.12);color:var(--orange)}
+.dtg-s{background:rgba(96,165,250,.12);color:var(--blue)}
+.dtg-m{background:rgba(192,132,252,.12);color:var(--purple)}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.overlay.show{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;width:340px;max-width:95vw}
+.modal h3{font-family:'DM Serif Display',serif;font-size:18px;margin-bottom:3px}
+.modal-meta{font-size:11px;color:var(--muted);margin-bottom:14px}
+.field{margin-bottom:10px}
+.field label{display:block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:4px}
+.field input,.field select,.field textarea{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:7px;padding:8px 10px;color:var(--text);font-family:'Sora',sans-serif;font-size:12px;outline:none}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent)}
+.field textarea{resize:vertical;min-height:50px}
+.modal-btns{display:flex;gap:6px;justify-content:flex-end;margin-top:14px}
+.btn-del{background:rgba(248,113,113,.12);color:var(--red);border:1px solid rgba(248,113,113,.3)}
+.db-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px}
+.db-card:hover{border-color:var(--accent)}
+@keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-5px);opacity:1}}
+.tdot{animation:bounce 1.2s infinite}
+.tdot:nth-child(2){animation-delay:.2s}
+.tdot:nth-child(3){animation-delay:.4s}
+@media print{nav,.ctrl-bar,.rules-bar,.legend-bar,.loader-bar,.ai-panel,.modal,.eh{display:none!important}body{height:auto;overflow:visible}.app-body,.main-panel{display:block}.view.active{display:block;overflow:visible}.tbl-wrap{overflow:visible}table{min-width:unset}thead th{background:#f0f0f0;color:#333;position:static}.cat-td{background:#fafafa}.dish-td,.db{background:white!important}.dn{color:black}@page{margin:10mm}}
+</style>
+</head>
+<body>
+<nav>
+  <div class="logo">Menu<span>AI</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showView('gen',this)" id="tab-gen">✨ Генератор</button>
+    <button class="nav-tab" onclick="showView('db',this)" id="tab-db">🌍 База страв</button>
+    <button class="nav-tab" onclick="showView('saved',this)" id="tab-saved">📋 Збережені</button>
+    <button class="nav-tab" onclick="showView('about',this)" id="tab-about">💡 Про продукт</button>
+  </div>
+  <div class="nav-right">
+    <select class="lang-sel" onchange="setLang(this.value)">
+      <option value="uk">🇺🇦 УКР</option>
+      <option value="pl">🇵🇱 POL</option>
+      <option value="en">🇬🇧 ENG</option>
+    </select>
+    <button class="ai-btn" onclick="toggleAI()">🤖 AI</button>
+  </div>
+</nav>
+<div class="app-body">
+<div class="main-panel">
+
+<div class="view active" id="view-gen">
+  <div class="ctrl-bar">
+    <div class="ctrl-grp"><div class="ctrl-lbl" id="lbl-season">Сезон</div>
+      <select id="selSeason"><option>❄️ Зима</option><option>🌸 Весна</option><option>☀️ Літо</option><option>🍂 Осінь</option></select>
+    </div>
+    <div class="ctrl-grp"><div class="ctrl-lbl" id="lbl-days">Днів</div>
+      <select id="selDays"><option value="5">Пн–Пт (5)</option><option value="7">Пн–Нд (7)</option><option value="3">3 дні</option></select>
+    </div>
+    <div class="ctrl-grp"><div class="ctrl-lbl" id="lbl-cream">Крем-супи</div>
+      <select id="selCream"><option value="2">2× тиждень</option><option value="3">3×</option><option value="1">1×</option></select>
+    </div>
+    <button class="btn btn-acc" onclick="generateMenu()" style="margin-top:16px" id="btn-gen">✨ Згенерувати</button>
+    <button class="btn btn-sec" onclick="window.print()" style="margin-top:16px" id="btn-print">🖨️ Друк</button>
+    <button class="btn btn-grn" onclick="saveMenu()" style="margin-top:16px" id="btn-save">💾 Зберегти</button>
+  </div>
+  <div class="rules-bar">
+    <div class="rbadge"><div class="rdot" style="background:var(--red)"></div><span id="rule-red">М'ясна червона</span></div>
+    <div class="rbadge"><div class="rdot" style="background:var(--green)"></div><span id="rule-green">Веган зелена</span></div>
+    <div class="rbadge"><div class="rdot" style="background:#fbbf24"></div><span id="rule-cream">Крем 2-3×/тижд</span></div>
+    <div class="rbadge"><div class="rdot" style="background:var(--orange)"></div><span id="rule-fried">1× Смажене</span></div>
+    <div class="rbadge"><div class="rdot" style="background:var(--blue)"></div><span id="rule-stewed">1× Тушене</span></div>
+    <div class="rbadge"><div class="rdot" style="background:var(--purple)"></div><span id="rule-minced">1× Мелене</span></div>
+    <div class="rbadge">🚫 <span id="rule-spinach">Шпинак ≤1×/день</span></div>
+    <div class="rbadge">🔄 <span id="rule-norepeat">Без повторів</span></div>
+  </div>
+  <div class="loader-bar" id="loader">
+    <div class="tdots"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div>
+    <span style="font-size:12px;color:var(--muted)" id="lbl-generating">Генерую меню...</span>
+  </div>
+  <div class="legend-bar">
+    <div class="leg"><div class="ldot" style="background:var(--red)"></div><span id="leg-red">Червона</span></div>
+    <div class="leg"><div class="ldot" style="background:var(--green)"></div><span id="leg-green">Зелена</span></div>
+    <div class="leg"><div class="ldot" style="background:#fbbf24"></div><span id="leg-cream">Крем</span></div>
+    <div class="leg"><div class="ldot" style="background:var(--orange)"></div><span id="leg-fried">Смажене</span></div>
+    <div class="leg"><div class="ldot" style="background:var(--blue)"></div><span id="leg-stewed">Тушене</span></div>
+    <div class="leg"><div class="ldot" style="background:var(--purple)"></div><span id="leg-minced">Мелене</span></div>
+    <span style="font-size:10px;color:var(--muted);margin-left:8px" id="click-hint">👆 Клікни на страву щоб редагувати</span>
+  </div>
+  <div class="tbl-wrap"><table><thead id="tHead"></thead><tbody id="tBody"></tbody></table></div>
+</div>
+
+<div class="view" id="view-db">
+  <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
+    <div><div style="font-family:'DM Serif Display',serif;font-size:20px" id="db-title">🌍 База страв</div>
+    <div style="font-size:11px;color:var(--muted)" id="db-sub">250+ страв з реальних меню 2025</div></div>
+    <button class="btn btn-acc" onclick="addDish()" id="btn-add">+ Додати</button>
+  </div>
+  <div style="padding:8px 16px;border-bottom:1px solid var(--border);display:flex;gap:5px;flex-wrap:wrap;flex-shrink:0">
+    <button class="btn btn-sec" style="font-size:11px;padding:4px 10px" onclick="filterDB('all',this)" id="f-all">Всі</button>
+    <button class="btn btn-sec" style="font-size:11px;padding:4px 10px" onclick="filterDB('soup',this)" id="f-soup">🥣 Супи</button>
+    <button class="btn btn-sec" style="font-size:11px;padding:4px 10px" onclick="filterDB('meat',this)" id="f-meat">🥩 М'ясо</button>
+    <button class="btn btn-sec" style="font-size:11px;padding:4px 10px" onclick="filterDB('fish',this)" id="f-fish">🐟 Риба</button>
+    <button class="btn btn-sec" style="font-size:11px;padding:4px 10px" onclick="filterDB('veg',this)" id="f-veg">🥗 Веган</button>
+    <button class="btn btn-sec" style="font-size:11px;padding:4px 10px" onclick="filterDB('side',this)" id="f-side">🥦 Гарніри</button>
+    <button class="btn btn-sec" style="font-size:11px;padding:4px 10px" onclick="filterDB('pierogi',this)" id="f-pierogi">🥟 Вареники</button>
+    <button class="btn btn-sec" style="font-size:11px;padding:4px 10px" onclick="filterDB('salad',this)" id="f-salad">🥗 Салатки</button>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:12px 16px">
+    <div id="dbGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px"></div>
+  </div>
+</div>
+
+<div class="view" id="view-saved">
+  <div style="padding:16px;font-family:'DM Serif Display',serif;font-size:20px;border-bottom:1px solid var(--border);flex-shrink:0" id="saved-title">📋 Збережені меню</div>
+  <div style="flex:1;overflow-y:auto;padding:14px 16px"><div id="savedList" style="display:grid;gap:8px;max-width:560px"></div></div>
+</div>
+
+<div class="view" id="view-about">
+  <div style="flex:1;overflow-y:auto;padding:24px;max-width:680px;margin:0 auto;width:100%">
+    <div style="font-family:'DM Serif Display',serif;font-size:32px;margin-bottom:6px">Menu<span style="color:var(--accent)">AI</span></div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:28px" id="about-sub">Інтелектуальна система генерації меню для ресторанів</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:28px">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px"><div style="font-size:24px;margin-bottom:8px">🧠</div><div style="font-weight:600;margin-bottom:4px" id="feat1-t">AI Генерація</div><div style="font-size:12px;color:var(--muted)" id="feat1-d">Автоматичне меню за правилами шеф-кухаря</div></div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px"><div style="font-size:24px;margin-bottom:8px">🌍</div><div style="font-weight:600;margin-bottom:4px" id="feat2-t">250+ страв</div><div style="font-size:12px;color:var(--muted)" id="feat2-d">Реальна база з меню 2025 року</div></div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px"><div style="font-size:24px;margin-bottom:8px">🚫</div><div style="font-weight:600;margin-bottom:4px" id="feat3-t">Розумні правила</div><div style="font-size:12px;color:var(--muted)" id="feat3-d">Шпинак ≤1×/день, без повторів, ротація м'яса</div></div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px"><div style="font-size:24px;margin-bottom:8px">✏️</div><div style="font-weight:600;margin-bottom:4px" id="feat4-t">Ручне редагування</div><div style="font-size:12px;color:var(--muted)" id="feat4-d">Клікни на будь-яку страву і зміни</div></div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px"><div style="font-size:24px;margin-bottom:8px">🖨️</div><div style="font-weight:600;margin-bottom:4px" id="feat5-t">Друк PDF</div><div style="font-size:12px;color:var(--muted)" id="feat5-d">Готове меню одразу на принтер</div></div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px"><div style="font-size:24px;margin-bottom:8px">🌐</div><div style="font-weight:600;margin-bottom:4px" id="feat6-t">3 мови</div><div style="font-size:12px;color:var(--muted)" id="feat6-d">Українська, Польська, Англійська</div></div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px">
+      <div style="font-weight:600;margin-bottom:12px;font-size:14px" id="roadmap-t">🗺️ Що буде далі</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;align-items:center;gap:10px;font-size:12px"><div style="background:var(--green);width:8px;height:8px;border-radius:50%;flex-shrink:0"></div><span id="road1">✅ База 250+ страв з реальних меню</span></div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:12px"><div style="background:var(--green);width:8px;height:8px;border-radius:50%;flex-shrink:0"></div><span id="road2">✅ AI асистент для перевірки меню</span></div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:12px"><div style="background:var(--green);width:8px;height:8px;border-radius:50%;flex-shrink:0"></div><span id="road3">✅ Друк та збереження</span></div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted)"><div style="background:var(--orange);width:8px;height:8px;border-radius:50%;flex-shrink:0"></div><span id="road4">🔜 Підключення Claude AI API</span></div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted)"><div style="background:var(--muted);width:8px;height:8px;border-radius:50%;flex-shrink:0"></div><span id="road5">📅 Логін для різних ресторанів</span></div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted)"><div style="background:var(--muted);width:8px;height:8px;border-radius:50%;flex-shrink:0"></div><span id="road6">📅 Калькулятор собівартості</span></div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted)"><div style="background:var(--muted);width:8px;height:8px;border-radius:50%;flex-shrink:0"></div><span id="road7">📅 Мобільний додаток</span></div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--muted);text-align:center" id="about-author">Розроблено разом з Claude AI · Oleh Polozhevets · 2025</div>
+  </div>
+</div>
+
+</div>
+
+<div class="ai-panel" id="aiPanel">
+  <div class="ai-head"><div class="ai-dot"></div>🤖 <span id="ai-title">AI Асистент</span></div>
+  <div class="ai-msgs" id="aiMsgs">
+    <div class="msg ai"><div class="msg-lbl ai">AI</div><div class="msg-bubble" id="ai-greeting">Привіт, Шефе! 👨‍🍳 Знаю базу — 250+ страв з меню 2025. Можу згенерувати меню, перевірити шпинак, знайти повтори. Що робимо?</div></div>
+  </div>
+  <div class="typing" id="typing">
+    <div class="tdots"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div>
+    <span id="ai-thinking">AI думає...</span>
+  </div>
+  <div class="ai-footer">
+    <div class="qbtns">
+      <button class="qbtn" onclick="quickCmd('gen')" id="q-gen">⚡ Згенеруй меню</button>
+      <button class="qbtn" onclick="quickCmd('spinach')" id="q-spinach">🔍 Перевір шпинак</button>
+      <button class="qbtn" onclick="quickCmd('repeat')" id="q-repeat">🔄 Знайди повтори</button>
+      <button class="qbtn" onclick="quickCmd('check')" id="q-check">✅ Перевір меню</button>
+      <button class="qbtn" onclick="quickCmd('stats')" id="q-stats">📊 Статистика</button>
+    </div>
+    <div class="ai-row">
+      <input type="text" id="aiInput" placeholder="Напиши задачу..."/>
+      <button class="ai-send" onclick="sendAI()">→</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="overlay" id="editOverlay" onclick="maybeClose(event)">
+  <div class="modal">
+    <h3>✏️ <span id="edit-title">Редагувати страву</span></h3>
+    <div class="modal-meta" id="editMeta"></div>
+    <div class="field"><label id="edit-name-lbl">Назва</label><input type="text" id="editName"/></div>
+    <div class="field"><label id="edit-type-lbl">Тип</label>
+      <select id="editType">
+        <option value="" id="type-none">— не вказано —</option>
+        <option value="fried" id="type-fried">🔥 Смажене</option>
+        <option value="stewed" id="type-stewed">💧 Тушене</option>
+        <option value="minced" id="type-minced">🫙 Мелене</option>
+        <option value="veg" id="type-veg">🌱 Веганське</option>
+      </select>
+    </div>
+    <div class="field"><label id="edit-notes-lbl">Нотатки</label><textarea id="editNotes" placeholder="Алергени, подача..."></textarea></div>
+    <div class="modal-btns">
+      <button class="btn btn-del" onclick="clearCell()" id="btn-clear">🗑️ Очистити</button>
+      <button class="btn btn-sec" onclick="closeEdit()" id="btn-cancel">Скасувати</button>
+      <button class="btn btn-acc" onclick="saveEdit()" id="btn-ok">✅ Зберегти</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var TR={
+uk:{
+  season:'Сезон',days_lbl:'Днів',cream_lbl:'Крем-супи',
+  btn_gen:'✨ Згенерувати',btn_print:'🖨️ Друк',btn_save:'💾 Зберегти',btn_add:'+ Додати',
+  rule_red:"М'ясна червона",rule_green:'Веган зелена',rule_cream:'Крем 2-3×/тижд',
+  rule_fried:'1× Смажене',rule_stewed:'1× Тушене',rule_minced:'1× Мелене',
+  rule_spinach:'Шпинак ≤1×/день',rule_norepeat:'Без повторів',
+  leg_red:'Червона',leg_green:'Зелена',leg_cream:'Крем',
+  leg_fried:'Смажене',leg_stewed:'Тушене',leg_minced:'Мелене',
+  click_hint:'👆 Клікни на страву щоб редагувати',
+  generating:'Генерую меню за правилами шеф-кухаря...',
+  db_title:'🌍 База страв',db_sub:'250+ страв з реальних меню 2025',
+  btn_add:'+ Додати',f_all:'Всі',f_soup:'🥣 Супи',f_meat:"🥩 М'ясо",
+  f_fish:'🐟 Риба',f_veg:'🥗 Веган',f_side:'🥦 Гарніри',f_pierogi:'🥟 Вареники',f_salad:'🥗 Салатки',
+  saved_title:'📋 Збережені меню',
+  about_sub:'Інтелектуальна система генерації меню для ресторанів',
+  feat1_t:'AI Генерація',feat1_d:'Автоматичне меню за правилами шеф-кухаря',
+  feat2_t:'250+ страв',feat2_d:'Реальна база з меню 2025 року',
+  feat3_t:'Розумні правила',feat3_d:"Шпинак ≤1×/день, без повторів, ротація м'яса",
+  feat4_t:'Ручне редагування',feat4_d:'Клікни на будь-яку страву і зміни',
+  feat5_t:'Друк PDF',feat5_d:'Готове меню одразу на принтер',
+  feat6_t:'3 мови',feat6_d:'Українська, Польська, Англійська',
+  roadmap_t:'🗺️ Що буде далі',
+  road1:'✅ База 250+ страв з реальних меню',road2:'✅ AI асистент для перевірки меню',
+  road3:'✅ Друк та збереження',road4:'🔜 Підключення Claude AI API',
+  road5:'📅 Логін для різних ресторанів',road6:'📅 Калькулятор собівартості',road7:'📅 Мобільний додаток',
+  about_author:'Розроблено разом з Claude AI · Oleh Polozhevets · 2025',
+  ai_title:'AI Асистент',ai_thinking:'AI думає...',ai_placeholder:'Напиши задачу...',
+  ai_greeting:"Привіт, Шефе! 👨‍🍳 Знаю базу — 250+ страв з меню 2025. Можу згенерувати меню, перевірити шпинак, знайти повтори.",
+  q_gen:'⚡ Згенеруй меню',q_spinach:'🔍 Перевір шпинак',q_repeat:'🔄 Знайди повтори',q_check:'✅ Перевір меню',q_stats:'📊 Статистика',
+  edit_title:'Редагувати страву',edit_name:'Назва',edit_type:'Тип',edit_notes:'Нотатки',
+  type_none:'— не вказано —',type_fried:'🔥 Смажене',type_stewed:'💧 Тушене',type_minced:'🫙 Мелене',type_veg:'🌱 Веганське',
+  btn_clear:'🗑️ Очистити',btn_cancel:'Скасувати',btn_ok:'✅ Зберегти',
+  cats:["Зупи","М'ясо","Риба","Вегетаріанське","Гарнір: овочі","Вареники / Кльоцки","Картопля","Крупи","Сурівка","Салатка"],
+  days:['ПН','ВТ','СР','ЧТ','ПТ','СБ','НД'],
+  lbl_f:'смажене',lbl_s:'тушене',lbl_m:'мелене',lbl_v:'veg',
+  no_saved:'Поки немає збережених меню',open_btn:'Відкрити',days_unit:'дн.',
+  ai_gen:'✨ Нове меню згенеровано!',
+  ai_sp_ok:'✅ Шпинак ок! Не більше 1× на день.',ai_sp_err:'⚠️ Проблеми зі шпинаком:\n',
+  ai_rep_ok:'✅ Повторів немає!',ai_rep_err:'⚠️ Повтори:\n',
+  ai_chk_ok:"✅ Меню відмінне!\n• Шпинак ≤1×/день ✓\n• М'ясо кожен день ✓",ai_chk_err:'⚠️ Проблеми:\n',
+  ai_stats:'📊 В базі:',ai_saved:'💾 Меню збережено!',ai_print:'🖨️ Відкриваю друк...',
+  ai_help:"🤖 Команди:\n• Згенеруй меню\n• Перевір шпинак\n• Знайди повтори\n• Перевір меню\n• Статистика"
+},
+pl:{
+  season:'Sezon',days_lbl:'Dni',cream_lbl:'Zupy krem',
+  btn_gen:'✨ Generuj',btn_print:'🖨️ Drukuj',btn_save:'💾 Zapisz',btn_add:'+ Dodaj',
+  rule_red:'Zupa mięsna czerwona',rule_green:'Vege zielona',rule_cream:'Krem 2-3×/tydz',
+  rule_fried:'1× Smażone',rule_stewed:'1× Duszone',rule_minced:'1× Mielone',
+  rule_spinach:'Szpinak ≤1×/dzień',rule_norepeat:'Bez powtórzeń',
+  leg_red:'Czerwona',leg_green:'Zielona',leg_cream:'Krem',
+  leg_fried:'Smażone',leg_stewed:'Duszone',leg_minced:'Mielone',
+  click_hint:'👆 Kliknij na danie aby edytować',
+  generating:'Generuję menu według zasad szefa...',
+  db_title:'🌍 Baza dań',db_sub:'250+ dań z realnych menu 2025',
+  f_all:'Wszystkie',f_soup:'🥣 Zupy',f_meat:'🥩 Mięso',f_fish:'🐟 Ryby',
+  f_veg:'🥗 Vege',f_side:'🥦 Dodatki',f_pierogi:'🥟 Pierogi',f_salad:'🥗 Sałatki',
+  saved_title:'📋 Zapisane menu',
+  about_sub:'Inteligentny system generowania menu dla restauracji',
+  feat1_t:'AI Generacja',feat1_d:'Automatyczne menu według zasad szefa',
+  feat2_t:'250+ dań',feat2_d:'Realna baza z menu 2025',
+  feat3_t:'Inteligentne zasady',feat3_d:'Szpinak ≤1×/dzień, bez powtórzeń',
+  feat4_t:'Ręczna edycja',feat4_d:'Kliknij na danie i zmień',
+  feat5_t:'Druk PDF',feat5_d:'Gotowe menu prosto na drukarkę',
+  feat6_t:'3 języki',feat6_d:'Ukraiński, Polski, Angielski',
+  roadmap_t:'🗺️ Co dalej',
+  road1:'✅ Baza 250+ dań z realnych menu',road2:'✅ Asystent AI',
+  road3:'✅ Druk i zapisywanie',road4:'🔜 Claude AI API',
+  road5:'📅 Multi-restauracja',road6:'📅 Kalkulator kosztów',road7:'📅 Aplikacja mobilna',
+  about_author:'Stworzone z Claude AI · Oleh Polozhevets · 2025',
+  ai_title:'Asystent AI',ai_thinking:'AI myśli...',ai_placeholder:'Napisz zadanie...',
+  ai_greeting:'Cześć, Szefie! 👨‍🍳 Znam bazę — 250+ dań. Mogę wygenerować menu, sprawdzić szpinak.',
+  q_gen:'⚡ Generuj menu',q_spinach:'🔍 Sprawdź szpinak',q_repeat:'🔄 Znajdź powtórzenia',q_check:'✅ Sprawdź menu',q_stats:'📊 Statystyki',
+  edit_title:'Edytuj danie',edit_name:'Nazwa',edit_type:'Typ',edit_notes:'Notatki',
+  type_none:'— nie wybrano —',type_fried:'🔥 Smażone',type_stewed:'💧 Duszone',type_minced:'🫙 Mielone',type_veg:'🌱 Wegetariańskie',
+  btn_clear:'🗑️ Wyczyść',btn_cancel:'Anuluj',btn_ok:'✅ Zapisz',
+  cats:['Zupy','Mięso','Ryba','Wegetariańskie','Dodatek: warzywa','Pierogi / Kluski','Ziemniaki','Kasze','Surówki','Sałatka'],
+  days:['PN','WT','ŚR','CZ','PT','SO','ND'],
+  lbl_f:'smażone',lbl_s:'duszone',lbl_m:'mielone',lbl_v:'veg',
+  no_saved:'Brak zapisanych menu',open_btn:'Otwórz',days_unit:'dni',
+  ai_gen:'✨ Nowe menu wygenerowane!',
+  ai_sp_ok:'✅ Szpinak OK!',ai_sp_err:'⚠️ Problemy ze szpinakiem:\n',
+  ai_rep_ok:'✅ Brak powtórzeń!',ai_rep_err:'⚠️ Powtórzenia:\n',
+  ai_chk_ok:'✅ Menu świetne!\n• Szpinak ≤1×/dzień ✓\n• Mięso każdego dnia ✓',ai_chk_err:'⚠️ Problemy:\n',
+  ai_stats:'📊 W bazie:',ai_saved:'💾 Menu zapisane!',ai_print:'🖨️ Otwieram druk...',
+  ai_help:'🤖 Komendy:\n• Generuj menu\n• Sprawdź szpinak\n• Znajdź powtórzenia\n• Sprawdź menu\n• Statystyki'
+},
+en:{
+  season:'Season',days_lbl:'Days',cream_lbl:'Cream soups',
+  btn_gen:'✨ Generate',btn_print:'🖨️ Print',btn_save:'💾 Save',btn_add:'+ Add',
+  rule_red:'Meat soup red',rule_green:'Vegan green',rule_cream:'Cream 2-3×/week',
+  rule_fried:'1× Fried',rule_stewed:'1× Stewed',rule_minced:'1× Minced',
+  rule_spinach:'Spinach ≤1×/day',rule_norepeat:'No repeats',
+  leg_red:'Red',leg_green:'Green',leg_cream:'Cream',
+  leg_fried:'Fried',leg_stewed:'Stewed',leg_minced:'Minced',
+  click_hint:'👆 Click any dish to edit',
+  generating:'Generating menu by chef rules...',
+  db_title:'🌍 Dish Database',db_sub:'250+ dishes from real 2025 menus',
+  f_all:'All',f_soup:'🥣 Soups',f_meat:'🥩 Meat',f_fish:'🐟 Fish',
+  f_veg:'🥗 Vegan',f_side:'🥦 Sides',f_pierogi:'🥟 Dumplings',f_salad:'🥗 Salads',
+  saved_title:'📋 Saved Menus',
+  about_sub:'Intelligent menu generation system for restaurants',
+  feat1_t:'AI Generation',feat1_d:'Automatic menu by chef rules',
+  feat2_t:'250+ dishes',feat2_d:'Real database from 2025 menus',
+  feat3_t:'Smart rules',feat3_d:'Spinach ≤1×/day, no repeats, meat rotation',
+  feat4_t:'Manual editing',feat4_d:'Click any dish to change it',
+  feat5_t:'PDF Print',feat5_d:'Ready menu straight to printer',
+  feat6_t:'3 languages',feat6_d:'Ukrainian, Polish, English',
+  roadmap_t:'🗺️ Coming next',
+  road1:'✅ 250+ dish database',road2:'✅ AI assistant',
+  road3:'✅ Print & save',road4:'🔜 Claude AI API integration',
+  road5:'📅 Multi-restaurant login',road6:'📅 Cost calculator',road7:'📅 Mobile app',
+  about_author:'Built with Claude AI · Oleh Polozhevets · 2025',
+  ai_title:'AI Assistant',ai_thinking:'AI thinking...',ai_placeholder:'Write a task...',
+  ai_greeting:'Hello, Chef! 👨‍🍳 I know 250+ dishes from 2025 menus. I can generate menus, check spinach, find repeats.',
+  q_gen:'⚡ Generate menu',q_spinach:'🔍 Check spinach',q_repeat:'🔄 Find repeats',q_check:'✅ Check menu',q_stats:'📊 Statistics',
+  edit_title:'Edit dish',edit_name:'Name',edit_type:'Type',edit_notes:'Notes',
+  type_none:'— not set —',type_fried:'🔥 Fried',type_stewed:'💧 Stewed',type_minced:'🫙 Minced',type_veg:'🌱 Vegan',
+  btn_clear:'🗑️ Clear',btn_cancel:'Cancel',btn_ok:'✅ Save',
+  cats:['Soups','Meat','Fish','Vegetarian','Side: vegetables','Dumplings / Gnocchi','Potatoes','Grains','Slaws','Salad'],
+  days:['MON','TUE','WED','THU','FRI','SAT','SUN'],
+  lbl_f:'fried',lbl_s:'stewed',lbl_m:'minced',lbl_v:'veg',
+  no_saved:'No saved menus yet',open_btn:'Open',days_unit:'days',
+  ai_gen:'✨ New menu generated!',
+  ai_sp_ok:'✅ Spinach OK! No more than 1× per day.',ai_sp_err:'⚠️ Spinach issues:\n',
+  ai_rep_ok:'✅ No repeats! All dishes are unique.',ai_rep_err:'⚠️ Repeats found:\n',
+  ai_chk_ok:'✅ Menu is great!\n• Spinach ≤1×/day ✓\n• Meat every day ✓',ai_chk_err:'⚠️ Issues found:\n',
+  ai_stats:'📊 In database:',ai_saved:'💾 Menu saved!',ai_print:'🖨️ Opening print...',
+  ai_help:'🤖 Commands:\n• Generate menu\n• Check spinach\n• Find repeats\n• Check menu\n• Statistics'
+}};
+
+var lang='uk';
+function T(k){return (TR[lang]&&TR[lang][k])||TR.uk[k]||k;}
+
+var IDS={
+  'lbl-season':'season','lbl-days':'days_lbl','lbl-cream':'cream_lbl',
+  'btn-gen':'btn_gen','btn-print':'btn_print','btn-save':'btn_save','btn-add':'btn_add',
+  'rule-red':'rule_red','rule-green':'rule_green','rule-cream':'rule_cream',
+  'rule-fried':'rule_fried','rule-stewed':'rule_stewed','rule-minced':'rule_minced',
+  'rule-spinach':'rule_spinach','rule-norepeat':'rule_norepeat',
+  'leg-red':'leg_red','leg-green':'leg_green','leg-cream':'leg_cream',
+  'leg-fried':'leg_fried','leg-stewed':'leg_stewed','leg-minced':'leg_minced',
+  'click-hint':'click_hint','lbl-generating':'generating',
+  'db-title':'db_title','db-sub':'db_sub',
+  'f-all':'f_all','f-soup':'f_soup','f-meat':'f_meat','f-fish':'f_fish',
+  'f-veg':'f_veg','f-side':'f_side','f-pierogi':'f_pierogi','f-salad':'f_salad',
+  'saved-title':'saved_title','about-sub':'about_sub',
+  'feat1-t':'feat1_t','feat1-d':'feat1_d','feat2-t':'feat2_t','feat2-d':'feat2_d',
+  'feat3-t':'feat3_t','feat3-d':'feat3_d','feat4-t':'feat4_t','feat4-d':'feat4_d',
+  'feat5-t':'feat5_t','feat5-d':'feat5_d','feat6-t':'feat6_t','feat6-d':'feat6_d',
+  'roadmap-t':'roadmap_t','road1':'road1','road2':'road2','road3':'road3',
+  'road4':'road4','road5':'road5','road6':'road6','road7':'road7',
+  'about-author':'about_author','ai-title':'ai_title','ai-thinking':'ai_thinking',
+  'q-gen':'q_gen','q-spinach':'q_spinach','q-repeat':'q_repeat','q-check':'q_check','q-stats':'q_stats',
+  'edit-title':'edit_title','edit-name-lbl':'edit_name','edit-type-lbl':'edit_type','edit-notes-lbl':'edit_notes',
+  'type-none':'type_none','type-fried':'type_fried','type-stewed':'type_stewed','type-minced':'type_minced','type-veg':'type_veg',
+  'btn-clear':'btn_clear','btn-cancel':'btn_cancel','btn-ok':'btn_ok'
+};
+
+function setLang(l){
+  lang=l;
+  Object.keys(IDS).forEach(function(id){var el=document.getElementById(id);if(el)el.textContent=T(IDS[id]);});
+  document.getElementById('aiInput').placeholder=T('ai_placeholder');
+  if(menuState&&Object.keys(menuState).length)renderTable(getDays());
+  renderDB();renderSaved();
+}
+
+var DB={
+  meatSoups:["Rosół z kaczki z kluseczkami","Węgierska zupa gulaszowa","Zupa z kaszą i pulpecikami","Pomidorowa z makaronem","Rosół rybny","Meksykańska","Szczawiowa z jajkiem","Barszcz biały z grzybami","Krupnik staropolski","Kapuśniak","Koperkowo-ogórkowa z ryżem","Kartoflanka z drobiowym mięsem","Grochówka na wędzonce","Kwaśnica","Ogórkowa","Ramen","Gruzińska zupa Charczo","Gulaszowa z pieczarkami","Barszcz Ukraiński","Szurpa tatarska","Kurkowa z ziemniakami","Zupa rybna z pomidorami","Żurek","Bawarska zupa na wieprzowinie z piwem","Fasolowa z kiełbaską","Razsolnik z kurczakiem","Kapusniak z fasolą i boczkiem","Zupa chłopska","Grzybowa","Zalwajka z boczkiem","Pikantna zupa curry z kurczakiem","Gulaszowa z fasolą","Solanka","Barszcz biały z kiełbasą","Flaki wołowe","Maltańska zupa rybna aljotta","Zur na domowym zakwasie","Zupa Bogracz","Tom Yum z kurczakiem","Zupa koperkowa z jajkiem i kurczakiem"],
+  creamSoups:["Krem z batata dyni i pomarańcza","Krem z pieczonych warzyw","Serowa z białych szparagów","Krem z pomidorów","Krem z dyni z marchewką","Krem z batata i mlekiem kokosowym","Krem z palonej papryki z grzankami","Krem z topinamburu","Krem ze szpinaku z kiełkami","Krem z buraków i fasoli","Krem z białej fasoli","Krem dyni z szałwią","Krem z brokuła i cukinii","Krem marchewkowy z mlekiem migdałowym","Krem z zielonego groszku z miętą","Krem z dyni z mlekiem kokosowym i chilli","Krem z kalafiora","Serowa z serkiem topionym i porem","Aromatyczna z soczewicą","Krem z czerwonej papryki"],
+  vegSoups:["Pieczarkowa (veg)","Tajska z trawą cytrynową","Turecka z czerwonej soczewicy","Buraczkowa","Zupa kalafiorowo-imbirowa","Cebulowa wege","Botwinkowa","Zupa pomidorowa","Flaki z Boczniaka","Szpinakowa (veg)","Zupa ziemniaczano-porowa","Złota z tofu i edamame","Paprykowa (veg)","Zupa miso","Gazpacho","Minestrone (veg)","Barszcz czerwony z ziemniakami","Zupa szpinakowa z serem pleśniowym","Tom Yum z tofu","Zupa porowo-cukiniowa z serem","Zupa brokułowa","Barszcz z pieczonego buraka ze śliwkami"],
+  fried:["Montana chicken fried steak","Schab panierowany smażony na smalcu","Nuggetsy drobiowe","Kotlet pożarski","Filet z kurczaka w panierce","Kurczak w glazurze ostrygowej","Filet z indyka w słoneczniku","Fish and chips","Rumsztyk z fetą i oliwkami","Korean fried chicken","Filet z kurczaka w siemieniu lnianym","Kurczak w cieście serowym","Stripsy z kurczaka","Filet drobiowy z sezamem","Filet z dorsza w panierce cytrynowej","Karków Belveder","Eskalopki z polędwiczki","Cevapcici z tzatziki","Ryż smażony z kurczakiem","Kurczak w cieście kokosowym"],
+  stewed:["Kaczka w sosie pomarańczowym","Wieprzowina z pastą miso imbirem i miodem","Siekaniec z grillowanym ananasem","Łopatka pieczona w cydrze i jabłkach","Kurczak z oscypkiem i żurawiną","Gołąbki z mięsem w sosie pomidorowym","Pulled pork w sosie BBQ","Bitki wieprzowe w sosie chrzanowym","Lasagne bolognese","Gulasz wołowy z suszonymi śliwkami i winem","Pieczone udka z kurczaka z chilli","Orientalna wieprzowina z grzybami mun","Stek z polędwiczki w sosie kurkowym","Chilli con carne","Kaczka z sosem żurawinowym","Udziec z kurczaka faszerowany warzywami","Indyk pieczony w sosie kurkowym","Wołowina po Burgundzku","Filet z kurczaka z chorizo","Polędwiczki w sosie z zielonego pieprzu","Bitki wieprzowe we własnym sosie","Kurczak generała Tso","Burrito wołowe","Satay z kurczaka Tom yum","Skrzydałka w sosie Hoi-sin","Roladki ze schabu z boczkiem i serem","Wątróbka z cebulką i jabłkiem","Golonka wieprzowa bez kości","Zrazy wołowe z ogórkiem kiszonym","Biriani z wieprzowiną","Karkówka w sosie sojowym","Indyk z żółtym curry","Wołowina z grzybami leśnymi"],
+  minced:["Pulpety wieprzowe w sosie koperkowym","Pulpety drobiowe w sosie koperkowym","Kotlet mielony panierowany","Fitburgery z indyka i cukinii","Pulpety w sosie pomidorowym","Klopsiki z indyka z sosem cukiniowym","Kotlety mielone z tartymi ziemniakami","Cannelloni z mięsem mielonym","Zapiekanka makaronowa po Bolońsku","Klopsy wieprzowe z kiszoną kapustą","Pulpety wołowe w sosie BBQ","Kofty wołowe w pikantnym sosie","Klopsiki z makaronem w sosie pieczarkowo-porowym"],
+  fish:["Dorsz panierowany w płatkach migdałowych","Ryba pod orzechową kruszonką","Ryba po grecku","Ryba w cieście piwnym","Morszczuk z salsą mango","Dorsz sote z guacamole","Ryba w sosie kurkowym","Morszczyk pieczony w czerwonym pesto","Łosoś w sosie teriyaki i pak choj","Pstrąg łososiowy z masłem i koperkiem","Ryba duszona z warzywami","Fish and chips","Zębacz","Filet z dorsza w panierce cytrynowej","Łosoś z glazurą cytrusową"],
+  vegMains:["Kotlety ciecierzycy i szpinaku","Placki kukurydziane z jogurtem","Pieczony kalafior z miso","Placuszki warzywne z dipem czosnkowym","Zrazy ziemniaczane z kiszoną kapustą","Gnocchi w sosie grzybowym","Chow Mein","Bakłażan panierowany w panko","Curry z tofu i cieciorką","Risotto cztery sery z brokułami","Falafel z jarmużem i Jalapeño","Faszerowane pieczarki portobello","Naleśniki z brokułami i serem","Placki ziemniaczane z serem","Indyjskie kotleciki z batatu i soczewicy","Naleśniki z jabłkiem i camembert","Cukinia z mozzarellą i pomidorami","Pieczony kalafior w sosie pomidorowym","Pieczona dynia Hokaido z sweet chilli","Boczniaki panierowane","Tofu z warzywami kwaśno-słodki","Kotlety brokułowo-ryżowe ze słonecznikiem","Kaszotto grzybowe z pomidorkami","Frittata z warzywami","Lasagne szpinakowa","Kotleciki z zielonego groszku","Ratatouille","Quesadilla z warzywami i serem","Makaron udon z warzywami","Tortellini z ricottą i szpinakiem","Leczo z boczniakami","Aloo gobi","Tarta z serem cukinią i bazylią","Burger wegetariański z kuskusu","Makaron ze szpinakiem i gorgonzolą","Dahl z kalafiora i grochu","Pieczone buraki z kozim serem","Czerwona thai curry z warzywami","Gulasz warzywny z batatami i cieciorką","Cukinia faszerowana po meksykańsku","Chaczapuri z serem i jajkiem","Kalafior panierowany","Potrawka z soczewicy i batatów"],
+  sideVeg:["Warzywa duszone w sosie balsamicznym","Kapusta biała zasmażana z boczkiem","Warzywa pieczone kalafior brokuł dynia","Szpinak w sosie śmietanowym","Mix warzyw z masłem","Kapusta czerwona duszona ze śliwkami","Fasolka szparagowa po grecku","Buraczki na ciepło","Pieczone bataty z rozmarynem","Marchew z groszkiem i kukurydzą","Warzywa grillowane po turecku","Pieczona marchew z miodem i tymiankiem","Fasolka żółta z bułką tartą","Brokuł z masłem","Fasolka szparagowa mix","Pieczarki smażone w śmietanie","Dynia w sosie z mleka kokosowego","Czerwona kapusta po tajsku","Fasolka po bretońsku","Marchew w sosie kokosowo-cytrusowym","Duszona biała kapusta z koperkiem","Pieczona brukselka w sosie balsamicznym","Mini marchewka karmelizowana","Szpinak z jajkiem sadzonym","Brukselka z jabłkiem i gruszką","Czerwona kapusta duszona z jabłkiem","Buraczki zasmażane z kwaśną śmietaną","Frytki z batata","Brokuły z płatkami migdałów","Zasmażana kapusta po czesku","Brukselka z czosnkiem","Pieczarki w aromatycznym sosie","Glazurowana marchewka","Zasmażana kapusta kiszona z grzybami","Kapusta biała zasmażana z pomidorami"],
+  pierogis:["Pierogi z mięsem","Quattro Empanadas 4-sera","Kartacze z mięsem i okrasą z boczku","Pierogi ze szpinakiem i serem feta","Kopytka batatowe","Kopytka po tajsku","Kluski śląskie dyniowe","Kopytka buraczane","Kopytka z pieczarkami i cebulą","Pierogi z kapustą i grzybami","Knedle ze śliwkami","Pierogi z bakłażanem i kozim serem","Kluski śląskie","Kopytka marchewkowe","Kopytka ze szpinakiem","Kopytka ziołowe","Pierogi ruskie","Pierogi z białą fasolą i grzybami","Pierogi góralskie podsmażane","Pierogi z twarożkiem na słodko","Pierogi z kimchi","Kopytka paprykowe","Kluski śląskie szpinakowe","Kluski marchewkowe","Kopytka podsmażane na masełku","Ravioli z pomidorem i ricottą","Gnocchi w sosie paprykowym","Pierogi z serem białym i batatem","Pierogi ruskie zasmażane","Pierogi z kurkami i boczkiem","Kopytka grzybowe","Kopytka truflowe","Kluski pomidorowo-bazyliowe","Kopytka leniwe","Kopytka z czosnkiem niedźwiedzim","Pyzy z pieczarkami"],
+  potatoes:["Ziemniaki puree","Ziemniaki z wody","Ziemniaki z wody z cebulką prażoną","Ziemniaki z masłem koperkowym","Ziemniaki pieczone z czosnkiem i majerankiem","Ziemniaki po Hiszpańsku z Mojo Rojo","Ziemniaki pieczone z tymiankiem","Ziemniaki w mundurkach","Ziemniaki smażone z warzywami","Ziemniaki po tajsku","Ziemniaki z sosem paprykowym","Puree z oliwą truflową","Młode ziemniaki z koperkiem","Ziemniaki po turecku"],
+  starches:["Fit kuskus","Soczewica z papryką","Kasza gryczana z pomidorem i pietruszką","Kasza bulgur z warzywami","Ryż z pieczarkami i groszkiem","Kasza pęczak z grzybami","Ryż biały","Kasza bulgur po turecku","Kasza gryczana z cebulą","Ryż Tom Yum","Soczewica zielona z papryką","Kasza jaglana z suszonymi pomidorami","Kasza pęczak z burakami","Ryż żółty z warzywami","Banosz","Kasza perłowa z warzywami","Kuskus z granatem","Mix soczewicy z warzywami","Duet ryżowy czarny i biały"],
+  suriwky:["Surówka z białej i czerwonej kapusty z porem","Colesław z białej kapusty","Pomidory ze śmietaną","Surówka z kapusty pekińskiej i pomarańcza","Colesław z kalafiora","Mizeria ze śmietaną","Surówka z włoskiej kapusty z marchewką","Surówka z buraków z cebulką","Mizeria ze śmietaną i koperkiem","Surówka z kiszonego ogórka z cebulką","Surówka z kiszonej kapusty","Surówka z marchewki z jabłkiem","Surówka z porem i rzodkiewką","Witaminowa surówka z buraków marchewki i kapusty","Surówka z marchewki i ananasa","Ogórki po koreańsku","Surówka z pora i jabłka","Surówka z młodej kapusty z papryką","Surówka z pomidorów i ogórków","Marchewka po koreańsku","Surówka tajska z białej kapusty","Ogórki małosolne","Orientalna surówka z marchewki z sezamem","Surówka Kopenhaska","Marchew z chrzanem","Kalafior marynowany","Bakłażan marynowany"],
+  salads:["Sałatka z ogórka pomidora i rzodkiewki","Sałatka cezar jajko grzanki","Sałatka śledziowa z jajkiem","Sałatka z gruszką i serem pleśniowym","Sałatka grecka","Sałatka cezar brokułem i jajkiem","Sałatka morska z tuńczykiem","Sałatka z jarmużu","Mix Sałat","Sałatka Foncioza","Sałatka z łososiem","Sałatka Hawajska","Sałatka z arbuza i pomidora z fetą","Sałatka z rukolą i pomarańczą","Sałatka Rodos","Sałatka caprese","Sałatka Gyros","Śledzie pod pierzynką","Sałata masłowa ze śmietaną i rzodkiewką","Sałatka Winegret","Sałatka z pieczonego buraka i fety","Sałatka jarzynowa","Sałatka z rukolą pieczoną dynią i orzechami","Sałatka z wiśniami szpinakiem i ricottą","Jesienna sałatka z jarmużem i kurczakiem","Sałatka fajita z grillowanym kurczakiem","Sałatka z grillowaną gruszką i kozim serem","Sałatka z halloumi","Sałatka Tabbouleh","Sałatka z tuńczykiem i jajkiem","Meksykańska sałatka","Mix sałat z batatami i ciecierzycą"]
+};
+
+var menuState={},savedMenus=[],aiOpen=true,editTarget=null,dbFilter='all';
+
+function spinach(n){if(!n)return false;var s=n.toLowerCase();return s.indexOf('szpin')!==-1||s.indexOf('шпин')!==-1;}
+function pick(arr,used){var a=arr.filter(function(x){return used.indexOf(x)===-1;});var p=a.length?a:arr;return p[Math.floor(Math.random()*p.length)];}
+function getDays(){var v=document.getElementById('selDays').value;var d=T('days');if(v==='7')return d.slice(0,7);if(v==='3')return d.slice(0,3);return d.slice(0,5);}
+
+function generateMenu(){
+  document.getElementById('loader').classList.add('show');
+  setTimeout(function(){
+    document.getElementById('loader').classList.remove('show');
+    var nd=parseInt(document.getElementById('selDays').value);
+    var cream=parseInt(document.getElementById('selCream').value);
+    menuState=buildMenu(nd,cream);renderTable(getDays());
+  },1200);
+}
+
+function buildMenu(nd,creamCount){
+  var state={},creamDays={},step=Math.max(1,Math.floor(nd/creamCount));
+  for(var i=0;i<creamCount&&i<nd;i++)creamDays[Math.min(i*step,nd-1)]=true;
+  var used={ms:[],cs:[],vs:[],fr:[],st:[],mi:[],fi:[],vm:[],sv:[],pg:[],pt:[],gr:[],su:[],sa:[]};
+  for(var d=0;d<nd;d++){
+    var sp=0;
+    if(!state[0])state[0]={};
+    var mS,vS;
+    if(creamDays[d]){mS={name:pick(DB.creamSoups,used.cs),type:'cream'};used.cs.push(mS.name);}
+    else{mS={name:pick(DB.meatSoups,used.ms),type:'red'};used.ms.push(mS.name);}
+    if(spinach(mS.name))sp++;
+    var vsP=sp>=1?DB.vegSoups.filter(function(s){return !spinach(s);}):DB.vegSoups;
+    vS={name:pick(vsP,used.vs),type:'green'};if(spinach(vS.name))sp++;used.vs.push(vS.name);
+    state[0][d]={name:mS.name+'\n'+vS.name,type:mS.type+'+green',notes:''};
+    if(!state[1])state[1]={};
+    var fr=pick(DB.fried,used.fr);used.fr.push(fr);if(spinach(fr))sp++;
+    var st=pick(DB.stewed,used.st);used.st.push(st);
+    var mi=pick(DB.minced,used.mi);used.mi.push(mi);
+    state[1][d]={name:fr+'\n'+st+'\n'+mi,type:'meat3',notes:''};
+    if(!state[2])state[2]={};
+    var fi=pick(DB.fish,used.fi);used.fi.push(fi);
+    state[2][d]={name:fi,type:'',notes:''};
+    if(!state[3])state[3]={};
+    var vmP=sp>=1?DB.vegMains.filter(function(v){return !spinach(v);}):DB.vegMains;
+    var vm=pick(vmP,used.vm);used.vm.push(vm);if(spinach(vm))sp++;
+    state[3][d]={name:vm,type:'veg',notes:''};
+    if(!state[4])state[4]={};
+    var svP=sp>=1?DB.sideVeg.filter(function(v){return !spinach(v);}):DB.sideVeg;
+    var sv=pick(svP,used.sv);used.sv.push(sv);
+    state[4][d]={name:sv,type:'veg',notes:''};
+    if(!state[5])state[5]={};
+    var pg=pick(DB.pierogis,used.pg);
+    if(spinach(pg)&&sp>=1)pg='—';else if(pg!=='—')used.pg.push(pg);
+    state[5][d]={name:pg,type:'',notes:''};
+    if(!state[6])state[6]={};
+    var pt=pick(DB.potatoes,used.pt);used.pt.push(pt);
+    state[6][d]={name:pt,type:'veg',notes:''};
+    if(!state[7])state[7]={};
+    var gr=pick(DB.starches,used.gr);used.gr.push(gr);
+    state[7][d]={name:gr,type:'veg',notes:''};
+    if(!state[8])state[8]={};
+    var su=pick(DB.suriwky,used.su);used.su.push(su);
+    state[8][d]={name:su,type:'veg',notes:''};
+    if(!state[9])state[9]={};
+    var sa=pick(DB.salads,used.sa);used.sa.push(sa);
+    state[9][d]={name:sa,type:'veg',notes:''};
+  }
+  return state;
+}
+
+function renderTable(days){
+  var cats=T('cats');
+  document.getElementById('tHead').innerHTML='<tr><th class="cat-h"></th>'+days.map(function(d){return '<th class="day-h">'+d+'</th>';}).join('')+'</tr>';
+  var body=document.getElementById('tBody');body.innerHTML='';
+  cats.forEach(function(cat,ci){
+    var tr=document.createElement('tr');
+    var html='<td class="cat-td">'+cat+'</td>';
+    days.forEach(function(_,di){
+      var cell=(menuState[ci]&&menuState[ci][di])||{name:'—',type:'',notes:''};
+      html+=buildCell(ci,di,cell);
+    });
+    tr.innerHTML=html;body.appendChild(tr);
+  });
+}
+
+function buildCell(ci,di,cell){
+  var lines=cell.name.split('\n'),inside='';
+  if(ci===0){
+    var types=cell.type.split('+');
+    lines.forEach(function(line,i){
+      var cls=types[i]==='red'?'sr':types[i]==='green'?'sg':'sc';
+      inside+='<div class="'+cls+'"><div class="db"><span class="dn">'+line+'</span></div></div>';
+    });
+  }else if(ci===1){
+    var mcs=['mf','ms','mm'],ml=[T('lbl_f'),T('lbl_s'),T('lbl_m')],dc=['dtg-f','dtg-s','dtg-m'];
+    lines.forEach(function(line,i){inside+='<div class="'+(mcs[i]||'')+'"><div class="db"><span class="dn">'+line+'</span><div class="dtgs"><span class="dtg '+dc[i]+'">'+ml[i]+'</span></div></div></div>';});
+  }else{
+    var isV=cell.type==='veg',note=cell.notes?'<div style="font-size:9px;color:var(--muted);margin-top:2px">'+cell.notes+'</div>':'';
+    inside='<div class="db"><span class="dn">'+cell.name+'</span>'+(isV?'<div class="dtgs"><span class="dtg dtg-v">'+T('lbl_v')+'</span></div>':'')+note+'</div>';
+  }
+  return '<td class="dish-td" onclick="openEdit('+ci+','+di+')"><div class="dish-inner">'+inside+'</div><span class="eh">✏️</span></td>';
+}
+
+function openEdit(ci,di){
+  editTarget={ci:ci,di:di};
+  var cell=(menuState[ci]&&menuState[ci][di])||{name:'',type:'',notes:''};
+  var cats=T('cats'),days=getDays();
+  document.getElementById('editMeta').textContent=cats[ci]+' — '+days[di];
+  document.getElementById('editName').value=cell.name;
+  document.getElementById('editType').value=cell.type||'';
+  document.getElementById('editNotes').value=cell.notes||'';
+  document.getElementById('editOverlay').classList.add('show');
+  setTimeout(function(){document.getElementById('editName').focus();},100);
+}
+function closeEdit(){document.getElementById('editOverlay').classList.remove('show');editTarget=null;}
+function maybeClose(e){if(e.target===document.getElementById('editOverlay'))closeEdit();}
+function clearCell(){document.getElementById('editName').value='—';}
+function saveEdit(){
+  if(!editTarget)return;
+  var ci=editTarget.ci,di=editTarget.di;
+  if(!menuState[ci])menuState[ci]={};
+  menuState[ci][di]={name:document.getElementById('editName').value||'—',type:document.getElementById('editType').value,notes:document.getElementById('editNotes').value};
+  closeEdit();renderTable(getDays());
+}
+
+function getAllItems(){
+  var items=[];
+  DB.meatSoups.forEach(function(n){items.push({name:n,cat:'soup',emoji:'🥣',lbl:T('f_soup')});});
+  DB.creamSoups.forEach(function(n){items.push({name:n,cat:'soup',emoji:'🥣',lbl:'Krem'});});
+  DB.vegSoups.forEach(function(n){items.push({name:n,cat:'soup',emoji:'🥣',lbl:T('f_veg')});});
+  DB.fried.forEach(function(n){items.push({name:n,cat:'meat',emoji:'🍗',lbl:T('lbl_f')});});
+  DB.stewed.forEach(function(n){items.push({name:n,cat:'meat',emoji:'🥘',lbl:T('lbl_s')});});
+  DB.minced.forEach(function(n){items.push({name:n,cat:'meat',emoji:'🍖',lbl:T('lbl_m')});});
+  DB.fish.forEach(function(n){items.push({name:n,cat:'fish',emoji:'🐟',lbl:T('f_fish')});});
+  DB.vegMains.forEach(function(n){items.push({name:n,cat:'veg',emoji:'🥗',lbl:T('f_veg')});});
+  DB.sideVeg.forEach(function(n){items.push({name:n,cat:'side',emoji:'🥦',lbl:T('f_side')});});
+  DB.pierogis.forEach(function(n){items.push({name:n,cat:'pierogi',emoji:'🥟',lbl:T('f_pierogi')});});
+  DB.potatoes.forEach(function(n){items.push({name:n,cat:'side',emoji:'🥔',lbl:'🥔'});});
+  DB.starches.forEach(function(n){items.push({name:n,cat:'side',emoji:'🌾',lbl:'🌾'});});
+  DB.suriwky.forEach(function(n){items.push({name:n,cat:'salad',emoji:'🥙',lbl:T('f_salad')});});
+  DB.salads.forEach(function(n){items.push({name:n,cat:'salad',emoji:'🥗',lbl:T('f_salad')});});
+  return items;
+}
+function filterDB(cat,btn){
+  dbFilter=cat;
+  document.querySelectorAll('#view-db .btn').forEach(function(b){b.style.color='';b.style.borderColor='';});
+  btn.style.color='var(--accent)';btn.style.borderColor='var(--accent)';renderDB();
+}
+function renderDB(){
+  var all=getAllItems();
+  var fil=dbFilter==='all'?all:all.filter(function(d){return d.cat===dbFilter;});
+  document.getElementById('dbGrid').innerHTML=fil.map(function(d){
+    return '<div class="db-card"><div style="font-size:16px;margin-bottom:5px">'+d.emoji+'</div><div style="font-size:12px;font-weight:500;margin-bottom:2px">'+d.name+'</div><div style="font-size:10px;color:var(--muted)">'+d.lbl+'</div></div>';
+  }).join('');
+}
+function addDish(){var n=prompt(T('edit_name')+':');if(!n)return;DB.vegMains.push(n);renderDB();}
+
+function saveMenu(){
+  var now=new Date(),date=now.getDate()+'.'+(now.getMonth()+1)+'.'+now.getFullYear();
+  var sel=document.getElementById('selSeason');
+  var season=sel.options[sel.selectedIndex].text;
+  savedMenus.unshift({date:date,season:season,state:JSON.parse(JSON.stringify(menuState)),days:getDays().slice()});
+  renderSaved();addMsg('ai',T('ai_saved'));
+}
+function renderSaved(){
+  var list=document.getElementById('savedList');
+  if(!savedMenus.length){list.innerHTML='<div style="color:var(--muted);font-size:13px">'+T('no_saved')+'</div>';return;}
+  list.innerHTML=savedMenus.map(function(m,i){
+    return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:14px;display:flex;justify-content:space-between;align-items:center"><div><div style="font-weight:600;margin-bottom:3px">'+m.season+' — '+m.date+'</div><div style="font-size:11px;color:var(--muted)">'+m.days.length+' '+T('days_unit')+'</div></div><div style="display:flex;gap:6px"><button class="btn btn-sec" style="font-size:11px;padding:4px 10px" onclick="loadMenu('+i+')">'+T('open_btn')+'</button><button class="btn btn-grn" style="font-size:11px;padding:4px 10px" onclick="window.print()">🖨️</button></div></div>';
+  }).join('');
+}
+function loadMenu(i){menuState=savedMenus[i].state;renderTable(savedMenus[i].days);showView('gen');}
+
+function showView(name,btn){
+  document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});
+  document.querySelectorAll('.nav-tab').forEach(function(t){t.classList.remove('active');});
+  document.getElementById('view-'+name).classList.add('active');
+  if(btn)btn.classList.add('active');
+  else document.getElementById('tab-gen').classList.add('active');
+  if(name==='saved')renderSaved();
+  if(name==='db')renderDB();
+}
+
+function toggleAI(){aiOpen=!aiOpen;document.getElementById('aiPanel').classList.toggle('hidden',!aiOpen);}
+function addMsg(role,text){
+  var box=document.getElementById('aiMsgs');
+  var div=document.createElement('div');div.className='msg '+role;
+  div.innerHTML='<div class="msg-lbl '+role+'">'+(role==='chef'?'👨‍🍳':'🤖 AI')+'</div><div class="msg-bubble">'+text+'</div>';
+  box.appendChild(div);box.scrollTop=box.scrollHeight;
+}
+function quickCmd(cmd){
+  var m={gen:T('q_gen'),spinach:T('q_spinach'),repeat:T('q_repeat'),check:T('q_check'),stats:T('q_stats')};
+  document.getElementById('aiInput').value=m[cmd]||cmd;sendAI();
+}
+function sendAI(){
+  var input=document.getElementById('aiInput'),msg=input.value.trim();if(!msg)return;
+  addMsg('chef',msg);input.value='';
+  var tp=document.getElementById('typing');tp.classList.add('show');
+  setTimeout(function(){tp.classList.remove('show');addMsg('ai',processCmd(msg));},800+Math.random()*500);
+}
+function processCmd(cmd){
+  var c=cmd.toLowerCase();
+  if(c.indexOf('генер')!==-1||c.indexOf('gener')!==-1||c.indexOf('нове')!==-1||c.indexOf('new')!==-1||c.indexOf('generuj')!==-1){generateMenu();return T('ai_gen');}
+  if(c.indexOf('шпин')!==-1||c.indexOf('szpin')!==-1||c.indexOf('spinach')!==-1){
+    var days=getDays(),issues=[];
+    days.forEach(function(day,di){var cnt=0;for(var ci=0;ci<10;ci++){var cell=menuState[ci]&&menuState[ci][di];if(cell&&spinach(cell.name))cnt++;}if(cnt>1)issues.push(day+': '+cnt+'×');});
+    return issues.length?T('ai_sp_err')+issues.join('\n'):T('ai_sp_ok');
+  }
+  if(c.indexOf('повтор')!==-1||c.indexOf('powtór')!==-1||c.indexOf('repeat')!==-1||c.indexOf('powtorz')!==-1){
+    var seen={},dups=[],days2=getDays();
+    days2.forEach(function(day,di){for(var ci=0;ci<10;ci++){var cell=menuState[ci]&&menuState[ci][di];if(cell&&cell.name&&cell.name!=='—'){cell.name.split('\n').forEach(function(n){if(n&&n!=='—'){if(seen[n])dups.push('"'+n.substring(0,22)+'" — '+seen[n]+'+'+day);else seen[n]=day;}});}}});
+    return dups.length?T('ai_rep_err')+dups.slice(0,5).join('\n'):T('ai_rep_ok');
+  }
+  if(c.indexOf('перевір')!==-1||c.indexOf('sprawdź')!==-1||c.indexOf('check')!==-1||c.indexOf('добре')!==-1||c.indexOf('dobrze')!==-1){
+    var days3=getDays(),spErr=0,noMeat=0;
+    days3.forEach(function(_,di){var sp=0;for(var ci=0;ci<10;ci++){var cell=menuState[ci]&&menuState[ci][di];if(cell&&spinach(cell.name))sp++;}if(sp>1)spErr++;if(!menuState[1]||!menuState[1][di]||menuState[1][di].name==='—')noMeat++;});
+    var iss=[];if(spErr)iss.push('⚠️ Шпинак >1×: '+spErr+'дн.');if(noMeat)iss.push("⚠️ М'ясо: "+noMeat+'дн.');
+    return iss.length?T('ai_chk_err')+iss.join('\n'):T('ai_chk_ok');
+  }
+  if(c.indexOf('стат')!==-1||c.indexOf('stat')!==-1||c.indexOf('скільк')!==-1||c.indexOf('ile')!==-1||c.indexOf('how many')!==-1){
+    var total=0;['meatSoups','creamSoups','vegSoups','fried','stewed','minced','fish','vegMains','sideVeg','pierogis','potatoes','starches','suriwky','salads'].forEach(function(k){total+=DB[k].length;});
+    return T('ai_stats')+'\n• '+(DB.meatSoups.length+DB.creamSoups.length+DB.vegSoups.length)+' sup\n• '+(DB.fried.length+DB.stewed.length+DB.minced.length)+' meat\n• '+DB.fish.length+' fish\n• '+DB.vegMains.length+' veg\n• '+DB.pierogis.length+' pierogi\n• '+(DB.suriwky.length+DB.salads.length)+' salads\n= '+total+' total!';
+  }
+  if(c.indexOf('збереж')!==-1||c.indexOf('zapisz')!==-1||c.indexOf('save')!==-1){saveMenu();return T('ai_saved');}
+  if(c.indexOf('друк')!==-1||c.indexOf('drukuj')!==-1||c.indexOf('print')!==-1){setTimeout(function(){window.print();},200);return T('ai_print');}
+  return T('ai_help');
+}
+
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeEdit();if(e.key==='Enter'&&document.getElementById('editOverlay').classList.contains('show'))saveEdit();});
+document.getElementById('aiInput').addEventListener('keydown',function(e){if(e.key==='Enter')sendAI();});
+
+generateMenu();renderDB();
+</script>
+
+</body>
+</html>

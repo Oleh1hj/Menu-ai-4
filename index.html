@@ -162,7 +162,7 @@ th.day-h{color:var(--accent);min-width:135px}
     <div class="ctrl-grp"><div class="ctrl-lbl" id="lbl-days">Днів</div>
       <select id="selDays"><option value="5">Пн–Пт (5)</option><option value="7">Пн–Нд (7)</option><option value="3">3 дні</option></select>
     </div>
-    <div class="ctrl-grp"><div class="ctrl-lbl" id="lbl-cream">Крем-супи</div>
+    <div class="ctrl-grp" style="display:none"><div class="ctrl-lbl" id="lbl-cream">Крем-супи</div>
       <select id="selCream"><option value="2">2× тиждень</option><option value="3">3×</option><option value="1">1×</option></select>
     </div>
     <button class="btn btn-acc" onclick="generateMenu()" style="margin-top:16px" id="btn-gen">✨ Згенерувати</button>
@@ -172,7 +172,7 @@ th.day-h{color:var(--accent);min-width:135px}
   <div class="rules-bar">
     <div class="rbadge"><div class="rdot" style="background:var(--red)"></div><span id="rule-red">М'ясна червона</span></div>
     <div class="rbadge"><div class="rdot" style="background:var(--green)"></div><span id="rule-green">Веган зелена</span></div>
-    <div class="rbadge"><div class="rdot" style="background:#fbbf24"></div><span id="rule-cream">Крем 2-3×/тижд</span></div>
+    <div class="rbadge" style="display:none"><div class="rdot" style="background:#fbbf24"></div><span id="rule-cream">Крем 2-3×/тижд</span></div>
     <div class="rbadge"><div class="rdot" style="background:var(--orange)"></div><span id="rule-fried">1× Смажене</span></div>
     <div class="rbadge"><div class="rdot" style="background:var(--blue)"></div><span id="rule-stewed">1× Тушене</span></div>
     <div class="rbadge"><div class="rdot" style="background:var(--purple)"></div><span id="rule-minced">1× Мелене</span></div>
@@ -548,21 +548,18 @@ function generateMenu(){
   setTimeout(function(){
     document.getElementById('loader').classList.remove('show');
     var nd=parseInt(document.getElementById('selDays').value);
-    var cream=parseInt(document.getElementById('selCream').value);
-    menuState=buildMenu(nd,cream);renderTable(getDays());
+    menuState=buildMenu(nd);renderTable(getDays());
   },1200);
 }
 
-function buildMenu(nd,creamCount){
-  var state={},creamDays={},step=Math.max(1,Math.floor(nd/creamCount));
-  for(var i=0;i<creamCount&&i<nd;i++)creamDays[Math.min(i*step,nd-1)]=true;
-  var used={ms:[],cs:[],vs:[],fr:[],st:[],mi:[],fi:[],vm:[],sv:[],pg:[],pt:[],gr:[],su:[],sa:[]};
+function buildMenu(nd){
+  var state={};
+  var used={ms:[],vs:[],fr:[],st:[],mi:[],fi:[],vm:[],sv:[],pg:[],pt:[],gr:[],su:[],sa:[]};
   for(var d=0;d<nd;d++){
     var sp=0;
     if(!state[0])state[0]={};
     var mS,vS;
-    if(creamDays[d]){mS={name:pick(DB.creamSoups,used.cs),type:'cream'};used.cs.push(mS.name);}
-    else{mS={name:pick(DB.meatSoups,used.ms),type:'red'};used.ms.push(mS.name);}
+    mS={name:pick(DB.meatSoups,used.ms),type:'red'};used.ms.push(mS.name);
     if(spinach(mS.name))sp++;
     var vsP=sp>=1?DB.vegSoups.filter(function(s){return !spinach(s);}):DB.vegSoups;
     vS={name:pick(vsP,used.vs),type:'green'};if(spinach(vS.name))sp++;used.vs.push(vS.name);
